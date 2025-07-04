@@ -1,5 +1,5 @@
 # Transit Gateway
-transit_gateway_id = "tgw-09424b80bd80feedf"
+transit_gateway_id = "tgw-010d2c2b785879692"
 
 # VPC CIDRs (if not using IPAM)
 app1_vpc_cidr = "10.100.4.0/24"
