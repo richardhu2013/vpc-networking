@@ -3,7 +3,7 @@ terraform {
     organization = "department-of-education-victoria"
     
     workspaces {
-      name = "mel-workload-vpcs"
+      name = "iac-awsmel-workloadvpcs"
     }
   }
 }

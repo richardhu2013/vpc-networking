@@ -6,7 +6,7 @@
 
 # Create the Transit Gateway
 module "transit_gateway" {
-  source = "./modules/transit-gateway"
+  source = "../../modules/transit-gateway"
 
   name            = var.transit_gateway_name
   description     = var.transit_gateway_description
@@ -108,7 +108,7 @@ resource "aws_ram_principal_association" "account_association" {
 
 # Create IPAM and address pools for the Melbourne region
 module "ipam" {
-  source = "./modules/ipam"
+  source = "../../modules/ipam"
   
   name            = var.ipam_name
   description     = var.ipam_description
