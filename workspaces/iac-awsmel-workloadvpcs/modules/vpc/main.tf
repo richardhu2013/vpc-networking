@@ -96,6 +96,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "this" {
 
 # Associate with spoke VPC route table
 resource "aws_ec2_transit_gateway_route_table_association" "spoke_rt_association" {
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.this]
+
   provider                       = aws.transit_account
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
   transit_gateway_route_table_id = var.transit_gateway_spoke_route_table_id
@@ -103,18 +105,24 @@ resource "aws_ec2_transit_gateway_route_table_association" "spoke_rt_association
 
 # Propagate routes to other relevant route tables
 resource "aws_ec2_transit_gateway_route_table_propagation" "security_vpc_rt_propagation" {
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.this]
+
   provider                       = aws.transit_account
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
   transit_gateway_route_table_id = var.transit_gateway_security_route_table_id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "external_lb_rt_propagation" {
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.this]
+
   provider                       = aws.transit_account
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
   transit_gateway_route_table_id = var.transit_gateway_external_lb_route_table_id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "internal_lb_rt_propagation" {
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.this]
+
   provider                       = aws.transit_account
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
   transit_gateway_route_table_id = var.transit_gateway_internal_lb_route_table_id
