@@ -165,7 +165,7 @@ locals {
 
 # 1. Create TGW attachment subnets first
 module "app1_tgw_attachment_subnets" {
-  source = "../../modules/subnet"
+  source = "./modules/subnet"
   
   vpc_id             = module.app1_vpc.vpc_id
   vpc_name           = "app1"
@@ -190,7 +190,7 @@ module "app1_tgw_attachment_subnets" {
 
 # 2. Create App subnets
 module "app1_app_subnets" {
-  source = "../../modules/subnet"
+  source = "./modules/subnet"
   
   vpc_id             = module.app1_vpc.vpc_id
   vpc_name           = "app1"
@@ -215,7 +215,7 @@ module "app1_app_subnets" {
 
 # 3. Create Data subnets
 module "app1_data_subnets" {
-  source = "../../modules/subnet"
+  source = "./modules/subnet"
   
   vpc_id             = module.app1_vpc.vpc_id
   vpc_name           = "app1"
@@ -240,7 +240,7 @@ module "app1_data_subnets" {
 
 # 4. Create VPC using the VPC module
 module "app1_vpc" {
-  source = "../../modules/vpc"
+  source = "./modules/vpc"
   
   vpc_name = "app1-vpc"
   vpc_cidr = local.app1_vpc_cidr
@@ -277,7 +277,7 @@ module "app1_vpc" {
 
 # 5. Create security groups
 module "app1_security_groups" {
-  source = "../../modules/security-groups"
+  source = "./modules/security-groups"
   
   vpc_id           = module.app1_vpc.vpc_id
   vpc_name         = "app1"
