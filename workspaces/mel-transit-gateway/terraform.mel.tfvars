@@ -12,7 +12,11 @@ dx_allowed_prefixes = ["10.100.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 enable_ram_sharing = true
 allow_external_principals = false
 principal_account_ids = [
-  "248896117066"
+  "015796116561",
+  "347009590487",
+  "413970409351",
+  "454771800402",
+  "717392812094"
   # Application account
 ]
 
