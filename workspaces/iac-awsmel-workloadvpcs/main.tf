@@ -154,12 +154,12 @@ locals {
     cidrsubnet(local.app1_vpc_cidr, 4, 1)
   ]
   app1_app_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 2, 0),
-    cidrsubnet(local.app1_vpc_cidr, 2, 1)
+    cidrsubnet(local.app1_vpc_cidr, 2, 1),
+    cidrsubnet(local.app1_vpc_cidr, 2, 2)
   ]
   app1_data_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 2, 2),
-    cidrsubnet(local.app1_vpc_cidr, 2, 3)
+    cidrsubnet(local.app1_vpc_cidr, 3, 6),
+    cidrsubnet(local.app1_vpc_cidr, 3, 7)
   ]
 }
 
