@@ -150,16 +150,16 @@ locals {
   
   # Define subnet CIDR blocks
   app1_tgw_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 4, 0),
-    cidrsubnet(local.app1_vpc_cidr, 4, 1)
+    cidrsubnet(local.app1_vpc_cidr, 4, 0), //10.100.16.0/28
+    cidrsubnet(local.app1_vpc_cidr, 4, 1)  //10.100.16.16/28
   ]
   app1_app_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 2, 1),
-    cidrsubnet(local.app1_vpc_cidr, 2, 2)
+    cidrsubnet(local.app1_vpc_cidr, 2, 1), //10.100.16.64/26
+    cidrsubnet(local.app1_vpc_cidr, 2, 2)  //10.100.16.128/26
   ]
   app1_data_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 3, 6),
-    cidrsubnet(local.app1_vpc_cidr, 3, 7)
+    cidrsubnet(local.app1_vpc_cidr, 3, 6), // 10.100.16.192/27
+    cidrsubnet(local.app1_vpc_cidr, 3, 7)  // 10.100.16.224/27
   ]
 }
 
@@ -176,7 +176,7 @@ module "app1_tgw_attachment_subnets" {
   route_table_routes = [
     {
       cidr_block = "0.0.0.0/0"
-      gateway_id = module.app1_vpc.transit_gateway_attachment_id
+      gateway_id = var.transit_gateway_id
     }
   ]
   
@@ -201,7 +201,7 @@ module "app1_app_subnets" {
   route_table_routes = [
     {
       cidr_block = "0.0.0.0/0"
-      gateway_id = module.app1_vpc.transit_gateway_attachment_id
+      gateway_id = var.transit_gateway_id
     }
   ]
   
@@ -226,7 +226,7 @@ module "app1_data_subnets" {
   route_table_routes = [
     {
       cidr_block = "0.0.0.0/0"
-      gateway_id = module.app1_vpc.transit_gateway_attachment_id
+      gateway_id = var.transit_gateway_id
     }
   ]
   
@@ -244,6 +244,10 @@ module "app1_vpc" {
   
   vpc_name = "app1-vpc"
   vpc_cidr = local.app1_vpc_cidr
+
+  providers = {
+    aws.transit_account = aws.transit_account
+  }
   # azs      = var.availability_zones
 
   # Pass the subnet IDs created above

@@ -42,7 +42,7 @@ resource "aws_route" "this" {
   
   route_table_id         = aws_route_table.this[floor(count.index / length(var.route_table_routes))].id
   destination_cidr_block = var.route_table_routes[count.index % length(var.route_table_routes)].cidr_block
-  gateway_id             = var.route_table_routes[count.index % length(var.route_table_routes)].gateway_id
+  transit_gateway_id             = var.route_table_routes[count.index % length(var.route_table_routes)].gateway_id
 }
 
 resource "aws_network_acl" "this" {
