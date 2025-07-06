@@ -183,8 +183,6 @@ module "app2_vpc" {
   }
   # azs      = var.availability_zones
 
-  # Pass the subnet IDs created above
-  # tgw_attachment_subnet_ids = module.app2_tgw_attachment_subnets.subnet_ids
   tgw_attachment_subnet_ids = module.app2_tgw_attachment_subnets.subnet_ids
   app_subnet_ids            = module.app2_app_subnets.subnet_ids
 

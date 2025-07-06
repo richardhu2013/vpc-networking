@@ -4,8 +4,6 @@
  * Melbourne region deployment using the VPC module.
  */
 
-
-
 # Get data about existing Transit Gateway
 data "aws_ec2_transit_gateway" "this" {
   provider = aws.transit_account
