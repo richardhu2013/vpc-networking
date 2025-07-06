@@ -1,8 +1,14 @@
-# main.tf
 locals {
+  # provider_map = {
+  #   for k, v in var.vpc_configs :
+  #   k => aws.vpc_providers[v.provider_alias]
+  # }
+
   provider_map = {
-    for k, v in var.vpc_configs :
-    k => aws["${k}"]
+    app1 = aws.app1
+    app2 = aws.app2
+    app3 = aws.app3
+    app4 = aws.app4
   }
 
   ipam_pools = {
@@ -32,19 +38,6 @@ locals {
   }
 }
 
-module "flow_logs" {
-  for_each = var.vpc_configs
-
-  source = "./modules/flow-logs"
-
-  providers = {
-    aws = local.provider_map[each.key]
-  }
-
-  name = each.key
-  tags = var.tags
-}
-
 resource "aws_vpc_ipam_pool_cidr_allocation" "this" {
   for_each = { for k, v in var.vpc_configs : k => v if v.use_ipam }
 
@@ -52,6 +45,61 @@ resource "aws_vpc_ipam_pool_cidr_allocation" "this" {
   ipam_pool_id    = data.aws_vpc_ipam_pool.workload[0].id
   netmask_length  = 24
   description     = "CIDR allocation for ${each.value.name}"
+}
+
+resource "aws_iam_role" "flow_log_role" {
+  for_each = var.vpc_configs
+
+  provider = local.provider_map[each.key]
+  name     = "vpc-flow-logs-role-${each.key}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "vpc-flow-logs.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "flow_log_policy" {
+  for_each = var.vpc_configs
+
+  provider = local.provider_map[each.key]
+  name     = "vpc-flow-logs-policy-${each.key}"
+  role     = aws_iam_role.flow_log_role[each.key].id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_cloudwatch_log_group" "flow_log_group" {
+  for_each = var.vpc_configs
+
+  provider          = local.provider_map[each.key]
+  name              = "/aws/vpc/flowlogs-${each.key}"
+  retention_in_days = 30
+
+  tags = var.tags
 }
 
 module "vpcs" {
@@ -63,7 +111,8 @@ module "vpcs" {
   vpc_cidr = local.ipam_pools[each.key]
 
   providers = {
-    aws                 = local.provider_map[each.key]
+    # aws                 = local.provider_map[each.key] 
+    aws                 = aws.app1
     aws.transit_account = aws.transit_account
   }
 
@@ -78,8 +127,8 @@ module "vpcs" {
 
   create_ssm_endpoints     = var.enable_ssm_endpoints
   enable_vpc_flow_logs     = var.enable_vpc_flow_logs
-  flow_log_role_arn        = module.flow_logs[each.key].iam_role_arn
-  flow_log_destination_arn = module.flow_logs[each.key].log_group_arn
+  flow_log_role_arn        = aws_iam_role.flow_log_role[each.key].arn
+  flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group[each.key].arn
   aws_region               = var.aws_region
 
   tags = merge(var.tags, { Application = each.value.name })

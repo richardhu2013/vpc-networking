@@ -33,7 +33,6 @@ vpc_configs = {
     cidr           = "10.100.16.0/24" # only used if use_ipam = false
     provider_alias = "app1"
   }
-
   app2 = {
     name           = "doevic-mel-workload-2"
     use_ipam       = false
