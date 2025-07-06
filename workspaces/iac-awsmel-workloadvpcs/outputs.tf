@@ -108,11 +108,6 @@ output "app2_app_subnet_cidrs" {
   value       = module.app2_app_subnets.subnet_cidrs
 }
 
-output "app2_data_subnet_ids" {
-  description = "List of IDs of data subnets"
-  value       = module.app2_data_subnets.subnet_ids
-}
-
 output "app2_data_subnet_cidrs" {
   description = "List of CIDR blocks of data subnets"
   value       = module.app2_data_subnets.subnet_cidrs
