@@ -54,7 +54,7 @@ variable "use_ipam" {
 variable "f5_lb_cidrs" {
   description = "CIDR blocks of F5 load balancers"
   type        = list(string)
-  default     = ["10.100.2.0/23", "10.100.6.0/23"]  # External and Internal LB VPCs
+  default     = ["10.100.2.0/23", "10.100.6.0/23"] # External and Internal LB VPCs
 }
 
 variable "management_cidrs" {
@@ -66,7 +66,7 @@ variable "management_cidrs" {
 variable "tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
-  default     = {
+  default = {
     Environment = "Production"
     Project     = "DOEVic-Melbourne"
     ManagedBy   = "Terraform"

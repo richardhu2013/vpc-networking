@@ -19,12 +19,12 @@ provider "aws" {
 provider "aws" {
   alias  = "transit_account"
   region = "ap-southeast-4"
-  
+
   # Use service account to assume role in Transit Account
   assume_role {
     role_arn = "arn:aws:iam::681696216801:role/DEVTerraformDeploymentRole"
   }
-  
+
   # Default tags applied to all resources in transit account
   default_tags {
     tags = {

@@ -1,24 +1,24 @@
 variable "cisco_vpcs" {
   description = "Map of Cisco VPCs to create with their configurations"
-  type = map(any)
+  type        = map(any)
   default = {
     guest = {
-      name = "cisco-guest"
-      description = "Cisco ISE Guest VPC with public-facing PSN components"
-      cidr = "10.0.32.0/24"
-      use_specific_cidr = true
-      create_nat_gateways = true
+      name                         = "cisco-guest"
+      description                  = "Cisco ISE Guest VPC with public-facing PSN components"
+      cidr                         = "10.0.32.0/24"
+      use_specific_cidr            = true
+      create_nat_gateways          = true
       create_network_load_balancer = true
-      lambda_enabled = true
+      lambda_enabled               = true
     },
     non-guest = {
-      name = "cisco-non-guest"
-      description = "Cisco ISE Non-Guest VPC with internal PSN components"
-      cidr = "10.0.33.0/24"
-      use_specific_cidr = true
-      create_nat_gateways = true
+      name                         = "cisco-non-guest"
+      description                  = "Cisco ISE Non-Guest VPC with internal PSN components"
+      cidr                         = "10.0.33.0/24"
+      use_specific_cidr            = true
+      create_nat_gateways          = true
       create_network_load_balancer = true
-      lambda_enabled = true
+      lambda_enabled               = true
     }
   }
 }
@@ -91,7 +91,7 @@ variable "aws_region" {
 variable "tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
-  default     = {
+  default = {
     Environment = "Production"
     Project     = "DOEVic-Melbourne"
     ManagedBy   = "Terraform"

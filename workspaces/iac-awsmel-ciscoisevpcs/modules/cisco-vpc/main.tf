@@ -21,9 +21,9 @@ resource "aws_vpc" "this" {
 # Create Internet Gateway (for Guest VPC only)
 resource "aws_internet_gateway" "this" {
   count = var.create_internet_gateway ? 1 : 0
-  
+
   vpc_id = aws_vpc.this.id
-  
+
   tags = merge(
     {
       Name = "${var.name}-igw"
@@ -35,11 +35,11 @@ resource "aws_internet_gateway" "this" {
 # Create TGW attachment subnets
 resource "aws_subnet" "tgw_attachment" {
   count = length(var.availability_zones)
-  
+
   vpc_id            = aws_vpc.this.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 4, count.index)
   availability_zone = var.availability_zones[count.index]
-  
+
   tags = merge(
     {
       Name = "${var.name}-tgw-${var.availability_zones[count.index]}"
@@ -51,12 +51,12 @@ resource "aws_subnet" "tgw_attachment" {
 # Create public subnets (for Guest VPC only)
 resource "aws_subnet" "public" {
   count = var.public_subnets_enabled ? length(var.availability_zones) : 0
-  
+
   vpc_id                  = aws_vpc.this.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 3, count.index + 2)
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
-  
+
   tags = merge(
     {
       Name = "${var.name}-public-${var.availability_zones[count.index]}"
@@ -68,11 +68,11 @@ resource "aws_subnet" "public" {
 # Create private subnets
 resource "aws_subnet" "private" {
   count = length(var.availability_zones)
-  
+
   vpc_id            = aws_vpc.this.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 3, count.index + 4)
   availability_zone = var.availability_zones[count.index]
-  
+
   tags = merge(
     {
       Name = "${var.name}-private-${var.availability_zones[count.index]}"
@@ -84,9 +84,9 @@ resource "aws_subnet" "private" {
 # Create public route table (for Guest VPC only)
 resource "aws_route_table" "public" {
   count = var.public_subnets_enabled ? 1 : 0
-  
+
   vpc_id = aws_vpc.this.id
-  
+
   tags = merge(
     {
       Name = "${var.name}-public-rt"
@@ -98,7 +98,7 @@ resource "aws_route_table" "public" {
 # Add route to Internet Gateway in public route table (for Guest VPC only)
 resource "aws_route" "public_igw" {
   count = var.public_subnets_enabled && var.create_internet_gateway ? 1 : 0
-  
+
   route_table_id         = aws_route_table.public[0].id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.this[0].id
@@ -107,7 +107,7 @@ resource "aws_route" "public_igw" {
 # Associate public subnets with public route table (for Guest VPC only)
 resource "aws_route_table_association" "public" {
   count = var.public_subnets_enabled ? length(var.availability_zones) : 0
-  
+
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public[0].id
 }
@@ -115,9 +115,9 @@ resource "aws_route_table_association" "public" {
 # Create private route tables
 resource "aws_route_table" "private" {
   count = length(var.availability_zones)
-  
+
   vpc_id = aws_vpc.this.id
-  
+
   tags = merge(
     {
       Name = "${var.name}-private-rt-${var.availability_zones[count.index]}"
@@ -129,7 +129,7 @@ resource "aws_route_table" "private" {
 # Associate private subnets with private route tables
 resource "aws_route_table_association" "private" {
   count = length(var.availability_zones)
-  
+
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
@@ -137,7 +137,7 @@ resource "aws_route_table_association" "private" {
 # Create TGW attachment route table
 resource "aws_route_table" "tgw_attachment" {
   vpc_id = aws_vpc.this.id
-  
+
   tags = merge(
     {
       Name = "${var.name}-tgw-rt"
@@ -149,16 +149,16 @@ resource "aws_route_table" "tgw_attachment" {
 # Associate TGW attachment subnets with TGW attachment route table
 resource "aws_route_table_association" "tgw_attachment" {
   count = length(var.availability_zones)
-  
+
   subnet_id      = aws_subnet.tgw_attachment[count.index].id
   route_table_id = aws_route_table.tgw_attachment.id
 }
 
 # Create NAT Gateways (if enabled)
 resource "aws_eip" "nat" {
-  count = var.create_nat_gateways ? length(var.availability_zones) : 0
+  count  = var.create_nat_gateways ? length(var.availability_zones) : 0
   domain = "vpc"
-  
+
   tags = merge(
     {
       Name = "${var.name}-nat-eip-${var.availability_zones[count.index]}"
@@ -169,10 +169,10 @@ resource "aws_eip" "nat" {
 
 resource "aws_nat_gateway" "this" {
   count = var.create_nat_gateways ? length(var.availability_zones) : 0
-  
+
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = var.public_subnets_enabled ? aws_subnet.public[count.index].id : aws_subnet.tgw_attachment[count.index].id
-  
+
   tags = merge(
     {
       Name = "${var.name}-natgw-${var.availability_zones[count.index]}"
@@ -184,7 +184,7 @@ resource "aws_nat_gateway" "this" {
 # Add default route to NAT Gateway in private route tables (if NAT Gateways are enabled)
 resource "aws_route" "private_natgw" {
   count = var.create_nat_gateways ? length(var.availability_zones) : 0
-  
+
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.this[count.index].id
@@ -193,7 +193,7 @@ resource "aws_route" "private_natgw" {
 # Add default route to Transit Gateway in private route tables (if NAT Gateways are not enabled)
 resource "aws_route" "private_tgw" {
   count = var.create_nat_gateways ? 0 : length(var.availability_zones)
-  
+
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = aws_ec2_transit_gateway_vpc_attachment.this.transit_gateway_id
@@ -204,10 +204,10 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
   subnet_ids         = aws_subnet.tgw_attachment[*].id
   transit_gateway_id = var.transit_gateway_id
   vpc_id             = aws_vpc.this.id
-  
+
   transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
-  
+
   tags = merge(
     {
       Name = "${var.name}-tgw-attachment"
@@ -216,26 +216,38 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
   )
 }
 
+# Accept attachment in transit account
+resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "this" {
+
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment.this]
+
+  provider = aws.transit_account
+
+  transit_gateway_attachment_id = aws_ec2_transit_gateway_vpc_attachment.this.id # or directly use the attachment ID if known
+
+  transit_gateway_default_route_table_association = false
+  transit_gateway_default_route_table_propagation = false
+
+  tags = {
+    Name = "${var.vpc_name}-tgw-attachment-accepter"
+    # Add any other tags as needed
+  }
+}
+
 # Associate with appropriate Transit Gateway route table
 resource "aws_ec2_transit_gateway_route_table_association" "this" {
-  provider = aws.transit_account
+  depends_on                     = [aws_ec2_transit_gateway_vpc_attachment_accepter.this]
+  provider                       = aws.transit_account
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
   transit_gateway_route_table_id = var.transit_gateway_route_table_id
 }
-
-# # Propagate routes to Security VPC route table
-# resource "aws_ec2_transit_gateway_route_table_propagation" "security_vpc" {
-#   provider = aws.transit_account
-#   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
-#   transit_gateway_route_table_id = var.transit_gateway_security_route_table_id
-# }
 
 # Create security groups
 resource "aws_security_group" "psn" {
   name        = "${var.name}-psn-sg"
   description = "Security group for PSN components"
   vpc_id      = aws_vpc.this.id
-  
+
   # Allow internal communication between PSN instances
   ingress {
     description = "Allow communication between PSN instances"
@@ -244,7 +256,7 @@ resource "aws_security_group" "psn" {
     protocol    = "-1"
     self        = true
   }
-  
+
   # Allow RADIUS authentication traffic
   ingress {
     description = "RADIUS authentication"
@@ -253,7 +265,7 @@ resource "aws_security_group" "psn" {
     protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   # Allow HTTPS traffic
   ingress {
     description = "HTTPS"
@@ -262,7 +274,7 @@ resource "aws_security_group" "psn" {
     protocol    = "tcp"
     cidr_blocks = var.vpc_type == "guest" ? ["0.0.0.0/0"] : var.management_cidrs
   }
-  
+
   # Allow management access
   ingress {
     description = "Management access"
@@ -271,7 +283,7 @@ resource "aws_security_group" "psn" {
     protocol    = "tcp"
     cidr_blocks = var.management_cidrs
   }
-  
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
@@ -279,7 +291,7 @@ resource "aws_security_group" "psn" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-psn-sg"
@@ -292,7 +304,7 @@ resource "aws_security_group" "pan" {
   name        = "${var.name}-pan-sg"
   description = "Security group for PAN components"
   vpc_id      = aws_vpc.this.id
-  
+
   # Allow traffic from PSN security group
   ingress {
     description     = "Allow traffic from PSN"
@@ -301,7 +313,7 @@ resource "aws_security_group" "pan" {
     protocol        = "-1"
     security_groups = [aws_security_group.psn.id]
   }
-  
+
   # Allow management access
   ingress {
     description = "Management access"
@@ -310,7 +322,7 @@ resource "aws_security_group" "pan" {
     protocol    = "tcp"
     cidr_blocks = var.management_cidrs
   }
-  
+
   # Allow HTTPS for management
   ingress {
     description = "HTTPS for management"
@@ -319,7 +331,7 @@ resource "aws_security_group" "pan" {
     protocol    = "tcp"
     cidr_blocks = var.management_cidrs
   }
-  
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
@@ -327,7 +339,7 @@ resource "aws_security_group" "pan" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-pan-sg"
@@ -340,7 +352,7 @@ resource "aws_security_group" "mnt" {
   name        = "${var.name}-mnt-sg"
   description = "Security group for MnT components"
   vpc_id      = aws_vpc.this.id
-  
+
   # Allow traffic from PSN security group
   ingress {
     description     = "Allow traffic from PSN"
@@ -349,7 +361,7 @@ resource "aws_security_group" "mnt" {
     protocol        = "-1"
     security_groups = [aws_security_group.psn.id]
   }
-  
+
   # Allow traffic from PAN security group
   ingress {
     description     = "Allow traffic from PAN"
@@ -358,7 +370,7 @@ resource "aws_security_group" "mnt" {
     protocol        = "-1"
     security_groups = [aws_security_group.pan.id]
   }
-  
+
   # Allow management access
   ingress {
     description = "Management access"
@@ -367,7 +379,7 @@ resource "aws_security_group" "mnt" {
     protocol    = "tcp"
     cidr_blocks = var.management_cidrs
   }
-  
+
   # Allow HTTPS for management
   ingress {
     description = "HTTPS for management"
@@ -376,7 +388,7 @@ resource "aws_security_group" "mnt" {
     protocol    = "tcp"
     cidr_blocks = var.management_cidrs
   }
-  
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
@@ -384,7 +396,7 @@ resource "aws_security_group" "mnt" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-mnt-sg"
@@ -396,14 +408,14 @@ resource "aws_security_group" "mnt" {
 # Create Network Load Balancer for RADIUS traffic
 resource "aws_lb" "radius" {
   count = var.create_network_load_balancer ? 1 : 0
-  
+
   name               = "${var.name}-radius-nlb"
   internal           = var.nlb_internal
   load_balancer_type = "network"
   subnets            = var.nlb_internal || !var.public_subnets_enabled ? aws_subnet.private[*].id : aws_subnet.public[*].id
-  
+
   enable_cross_zone_load_balancing = true
-  
+
   tags = merge(
     {
       Name = "${var.name}-radius-nlb"
@@ -414,18 +426,18 @@ resource "aws_lb" "radius" {
 
 resource "aws_lb_target_group" "radius_auth" {
   count = var.create_network_load_balancer ? 1 : 0
-  
+
   name     = "${var.name}-radius-auth-tg"
   port     = 1812
   protocol = "UDP"
   vpc_id   = aws_vpc.this.id
-  
+
   health_check {
     port     = 443
     protocol = "TCP"
     interval = 30
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-radius-auth-tg"
@@ -436,18 +448,18 @@ resource "aws_lb_target_group" "radius_auth" {
 
 resource "aws_lb_target_group" "radius_acct" {
   count = var.create_network_load_balancer ? 1 : 0
-  
+
   name     = "${var.name}-radius-acct-tg"
   port     = 1813
   protocol = "UDP"
   vpc_id   = aws_vpc.this.id
-  
+
   health_check {
     port     = 443
     protocol = "TCP"
     interval = 30
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-radius-acct-tg"
@@ -458,11 +470,11 @@ resource "aws_lb_target_group" "radius_acct" {
 
 resource "aws_lb_listener" "radius_auth" {
   count = var.create_network_load_balancer ? 1 : 0
-  
+
   load_balancer_arn = aws_lb.radius[0].arn
   port              = 1812
   protocol          = "UDP"
-  
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.radius_auth[0].arn
@@ -471,11 +483,11 @@ resource "aws_lb_listener" "radius_auth" {
 
 resource "aws_lb_listener" "radius_acct" {
   count = var.create_network_load_balancer ? 1 : 0
-  
+
   load_balancer_arn = aws_lb.radius[0].arn
   port              = 1813
   protocol          = "UDP"
-  
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.radius_acct[0].arn
@@ -485,9 +497,9 @@ resource "aws_lb_listener" "radius_acct" {
 # Create Lambda function for Cisco ISE (if enabled)
 resource "aws_iam_role" "lambda" {
   count = var.lambda_enabled ? 1 : 0
-  
+
   name = "${var.name}-lambda-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -500,7 +512,7 @@ resource "aws_iam_role" "lambda" {
       }
     ]
   })
-  
+
   tags = merge(
     {
       Name = "${var.name}-lambda-role"
@@ -511,10 +523,10 @@ resource "aws_iam_role" "lambda" {
 
 resource "aws_iam_role_policy" "lambda" {
   count = var.lambda_enabled ? 1 : 0
-  
+
   name = "${var.name}-lambda-policy"
   role = aws_iam_role.lambda[0].id
-  
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -532,6 +544,7 @@ resource "aws_iam_role_policy" "lambda" {
           "ec2:DescribeInstances",
           "ec2:DescribeSubnets",
           "ec2:DescribeVpcs",
+          "ec2:CreateNetworkInterface",
           "elasticloadbalancing:DescribeLoadBalancers",
           "elasticloadbalancing:DescribeTargetGroups",
           "elasticloadbalancing:RegisterTargets",
@@ -546,22 +559,22 @@ resource "aws_iam_role_policy" "lambda" {
 
 resource "aws_lambda_function" "cisco_handler" {
   count = var.lambda_enabled ? 1 : 0
-  
+
   function_name = "${var.name}-cisco-handler"
   role          = aws_iam_role.lambda[0].arn
   handler       = "index.handler"
-  runtime       = "nodejs16.x"
+  runtime       = "nodejs18.x"
   timeout       = 300
   memory_size   = 256
-  
+
   # Placeholder code - replace with actual implementation
-  filename      = "${path.module}/lambda/function.zip"
-  
+  filename = "${path.module}/lambda/function.zip"
+
   vpc_config {
     subnet_ids         = aws_subnet.private[*].id
     security_group_ids = [aws_security_group.lambda[0].id]
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-cisco-handler"
@@ -572,18 +585,18 @@ resource "aws_lambda_function" "cisco_handler" {
 
 resource "aws_security_group" "lambda" {
   count = var.lambda_enabled ? 1 : 0
-  
+
   name        = "${var.name}-lambda-sg"
   description = "Security group for Lambda function"
   vpc_id      = aws_vpc.this.id
-  
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   tags = merge(
     {
       Name = "${var.name}-lambda-sg"
@@ -595,12 +608,12 @@ resource "aws_security_group" "lambda" {
 # VPC Flow Logs
 resource "aws_flow_log" "this" {
   count = var.enable_vpc_flow_logs ? 1 : 0
-  
+
   iam_role_arn    = var.flow_log_role_arn
   log_destination = var.flow_log_destination_arn
   traffic_type    = "ALL"
   vpc_id          = aws_vpc.this.id
-  
+
   tags = merge(
     {
       Name = "${var.name}-flow-log"
@@ -612,7 +625,7 @@ resource "aws_flow_log" "this" {
 # Placeholder for the lambda code zip file
 resource "local_file" "lambda_zip" {
   count = var.lambda_enabled ? 1 : 0
-  
+
   content  = <<-EOF
     exports.handler = async (event) => {
       console.log('Cisco ISE handler invoked');

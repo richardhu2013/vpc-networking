@@ -82,7 +82,7 @@ variable "ipam_description" {
 variable "ipam_additional_regions" {
   description = "Additional regions to include in the IPAM"
   type        = list(string)
-  default     = ["ap-southeast-4"]  # Sydney region
+  default     = ["ap-southeast-4"] # Sydney region
 }
 
 variable "ipam_top_level_cidr" {
@@ -100,7 +100,7 @@ variable "ipam_regional_cidr" {
 variable "ipam_functional_pools" {
   description = "Map of functional pools to create with their CIDRs"
   type = map(object({
-    cidr = string
+    cidr        = string
     description = optional(string)
   }))
   default = {
@@ -136,7 +136,7 @@ variable "enable_ipam_ram_sharing" {
 variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)
-  default     = {
+  default = {
     Environment = "Production"
     Project     = "DOEVic-Melbourne"
     ManagedBy   = "Terraform"

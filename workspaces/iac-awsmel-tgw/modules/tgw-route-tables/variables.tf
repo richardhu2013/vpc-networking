@@ -6,7 +6,7 @@ variable "transit_gateway_id" {
 variable "route_tables" {
   description = "List of route tables to create"
   type = list(object({
-    name = string
+    name        = string
     description = optional(string)
   }))
 }
@@ -14,10 +14,10 @@ variable "route_tables" {
 variable "static_routes" {
   description = "List of static routes to create"
   type = list(object({
-    route_table_name = string
-    destination_cidr_block = string
+    route_table_name              = string
+    destination_cidr_block        = string
     transit_gateway_attachment_id = string
-    blackhole = optional(bool)
+    blackhole                     = optional(bool)
   }))
   default = []
 }
@@ -25,7 +25,7 @@ variable "static_routes" {
 variable "route_table_associations" {
   description = "List of route table associations to create"
   type = list(object({
-    route_table_name = string
+    route_table_name              = string
     transit_gateway_attachment_id = string
   }))
   default = []
@@ -34,7 +34,7 @@ variable "route_table_associations" {
 variable "route_table_propagations" {
   description = "List of route table propagations to create"
   type = list(object({
-    route_table_name = string
+    route_table_name              = string
     transit_gateway_attachment_id = string
   }))
   default = []

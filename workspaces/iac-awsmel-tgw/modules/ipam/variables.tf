@@ -40,7 +40,7 @@ variable "regional_cidr" {
 variable "functional_pools" {
   description = "Map of functional pools to create with their CIDRs"
   type = map(object({
-    cidr = string
+    cidr        = string
     description = optional(string)
   }))
 }

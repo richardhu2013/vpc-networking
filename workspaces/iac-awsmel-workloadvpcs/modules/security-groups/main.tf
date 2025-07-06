@@ -16,22 +16,22 @@ resource "aws_security_group" "app_tier" {
     protocol    = "-1"
     self        = true
   }
-  
+
   # Allow inbound from F5
   ingress {
-    description     = "Allow traffic from F5 load balancers"
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    cidr_blocks     = var.f5_lb_cidrs
+    description = "Allow traffic from F5 load balancers"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = var.f5_lb_cidrs
   }
-  
+
   ingress {
-    description     = "Allow HTTPS from F5 load balancers"
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    cidr_blocks     = var.f5_lb_cidrs
+    description = "Allow HTTPS from F5 load balancers"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = var.f5_lb_cidrs
   }
 
   # Allow all outbound traffic

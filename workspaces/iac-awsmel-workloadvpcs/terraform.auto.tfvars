@@ -14,9 +14,9 @@ enable_vpc_flow_logs = true
 #flow_log_destination_arn = "arn:aws:logs:ap-southeast-4:248896117066:log-group:/aws/vpc/flowlogs"
 
 # Security groups
-f5_lb_cidrs = ["10.100.2.0/23", "10.100.6.0/23"]
+f5_lb_cidrs      = ["10.100.2.0/23", "10.100.6.0/23"]
 management_cidrs = ["10.0.0.0/8", "172.16.0.0/12"]
-app1_name = "doevic-mel-workload-1"
+app1_name        = "doevic-mel-workload-1"
 # Common tags
 tags = {
   Environment = "Production"

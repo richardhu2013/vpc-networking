@@ -1,7 +1,7 @@
 # Provider for the Workload Account (where VPCs will be created)
 provider "aws" {
   region = "ap-southeast-4"
-  
+
   # Use service account with appropriate permissions in the Workload account
   assume_role {
     role_arn     = "arn:aws:iam::248896117066:role/DEVTerraformDeploymentRole"
@@ -22,8 +22,8 @@ provider "aws" {
 provider "aws" {
   alias  = "transit_account"
   region = "ap-southeast-4"
-  
-   # Use service account to assume role in Transit Account
+
+  # Use service account to assume role in Transit Account
   assume_role {
     role_arn = "arn:aws:iam::681696216801:role/DEVTerraformDeploymentRole"
   }

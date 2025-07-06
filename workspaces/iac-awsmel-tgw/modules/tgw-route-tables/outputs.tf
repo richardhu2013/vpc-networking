@@ -7,20 +7,20 @@ output "route_table_ids" {
 
 output "route_tables" {
   description = "Map of route table resources"
-  value = aws_ec2_transit_gateway_route_table.this
+  value       = aws_ec2_transit_gateway_route_table.this
 }
 
 output "routes" {
   description = "Map of routes created"
-  value = aws_ec2_transit_gateway_route.routes
+  value       = aws_ec2_transit_gateway_route.routes
 }
 
 output "associations" {
   description = "Map of route table associations created"
-  value = aws_ec2_transit_gateway_route_table_association.associations
+  value       = aws_ec2_transit_gateway_route_table_association.associations
 }
 
 output "propagations" {
   description = "Map of route table propagations created"
-  value = aws_ec2_transit_gateway_route_table_propagation.propagations
+  value       = aws_ec2_transit_gateway_route_table_propagation.propagations
 }
