@@ -5,9 +5,9 @@
  */
 
 # Create IAM Role for Flow Logs
-resource "aws_iam_role" "flow_log_role" {
-  provider = aws.app1
-  name     = "vpc-flow-logs-role-app2"
+resource "aws_iam_role" "flow_log_role_app2" {
+  provider = aws.app2
+  name     = "vpc-flow-logs-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -23,10 +23,10 @@ resource "aws_iam_role" "flow_log_role" {
   })
 }
 
-resource "aws_iam_role_policy" "flow_log_policy" {
-  provider = aws.app1
-  name     = "vpc-flow-logs-policy-app2"
-  role     = aws_iam_role.flow_log_role.id
+resource "aws_iam_role_policy" "flow_log_policy_app2" {
+  provider = aws.app2
+  name     = "vpc-flow-logs-policy"
+  role     = aws_iam_role.flow_log_role_app2.id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -47,101 +47,13 @@ resource "aws_iam_role_policy" "flow_log_policy" {
 }
 
 # Create CloudWatch Log Group for Flow Logs
-resource "aws_cloudwatch_log_group" "flow_log_group" {
-  provider = aws.app1
+resource "aws_cloudwatch_log_group" "flow_log_group_app2" {
+  provider = aws.app2
 
-  name              = "/aws/vpc/app2/flowlogs"
+  name              = "/aws/vpc/flowlogs"
   retention_in_days = 30
 
   tags = var.tags
-}
-
-# Get data about existing Transit Gateway
-data "aws_ec2_transit_gateway" "this" {
-  provider = aws.transit_account
-  id       = var.transit_gateway_id
-}
-
-# Get data about existing Transit Gateway
-data "aws_ec2_transit_gateway" "this" {
-  provider = aws.transit_account
-  id       = var.transit_gateway_id
-}
-
-# Get route tables from Transit Gateway
-data "aws_ec2_transit_gateway_route_table" "spoke_vpc" {
-  provider = aws.transit_account
-
-  filter {
-    name   = "transit-gateway-id"
-    values = [var.transit_gateway_id]
-  }
-
-  filter {
-    name   = "tag:Name"
-    values = ["spoke_vpc_tgw_att_RT"]
-  }
-}
-
-data "aws_ec2_transit_gateway_route_table" "security_vpc" {
-  provider = aws.transit_account
-
-  filter {
-    name   = "transit-gateway-id"
-    values = [var.transit_gateway_id]
-  }
-
-  filter {
-    name   = "tag:Name"
-    values = ["sec-vpc-tgw-att-RT"]
-  }
-}
-
-data "aws_ec2_transit_gateway_route_table" "external_lb_vpc" {
-  provider = aws.transit_account
-
-  filter {
-    name   = "transit-gateway-id"
-    values = [var.transit_gateway_id]
-  }
-
-  filter {
-    name   = "tag:Name"
-    values = ["ext-lb-vpc-tgw-att-rt"]
-  }
-}
-
-data "aws_ec2_transit_gateway_route_table" "internal_lb_vpc" {
-  provider = aws.transit_account
-
-  filter {
-    name   = "transit-gateway-id"
-    values = [var.transit_gateway_id]
-  }
-
-  filter {
-    name   = "tag:Name"
-    values = ["int-lb-vpc-tgw-att-rt"]
-  }
-}
-
-# Get data from IPAM pools if enabled
-data "aws_vpc_ipam_pool" "workload" {
-  count    = var.use_ipam ? 1 : 0
-  provider = aws.transit_account
-
-  # Look up the workload IPAM pool by its ID or tags
-  # The ID is preferred when available via remote state or data source
-  id = var.ipam_workload_pool_id != "" ? var.ipam_workload_pool_id : null
-
-  dynamic "filter" {
-    # Only apply filter if pool ID isn't directly specified
-    for_each = var.ipam_workload_pool_id == "" ? [1] : []
-    content {
-      name   = "tag:Name"
-      values = ["${var.ipam_name}-workload-pool"]
-    }
-  }
 }
 
 # Create IPAM allocations for App2 VPC
@@ -277,8 +189,8 @@ module "app2_vpc" {
   enable_vpc_flow_logs = var.enable_vpc_flow_logs
   # flow_log_role_arn = var.flow_log_role_arn
   # flow_log_destination_arn = var.flow_log_destination_arn
-  flow_log_role_arn        = aws_iam_role.flow_log_role.arn
-  flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group.arn
+  flow_log_role_arn        = aws_iam_role.flow_log_role_app2.arn
+  flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group_app2.arn
   aws_region               = var.aws_region
 
   tags = merge(
