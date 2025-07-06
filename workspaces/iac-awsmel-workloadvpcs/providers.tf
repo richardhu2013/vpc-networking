@@ -4,7 +4,7 @@ provider "aws" {
   assume_role {
     role_arn = "arn:aws:iam:248896117066:role/DEVTerraformDeploymentRole"
   }
-   # Default tags applied to all resources
+  # Default tags applied to all resources
   default_tags {
     tags = {
       Environment = "Production"
@@ -21,7 +21,7 @@ provider "aws" {
   assume_role {
     role_arn = "arn:aws:iam::248896117066:role/DEVTerraformDeploymentRole"
   }
-   # Default tags applied to all resources
+  # Default tags applied to all resources
   default_tags {
     tags = {
       Environment = "Production"
@@ -38,7 +38,7 @@ provider "aws" {
   assume_role {
     role_arn = "arn:aws:iam::681696216801:role/DEVTerraformDeploymentRole"
   }
-   # Default tags applied to all resources
+  # Default tags applied to all resources
   default_tags {
     tags = {
       Environment = "Production"
