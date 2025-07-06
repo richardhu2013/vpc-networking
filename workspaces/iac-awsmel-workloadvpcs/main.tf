@@ -1,9 +1,4 @@
-/**
- * # Melbourne Region Workload VPC - App1
- * This workspace creates a standard three-tier workload VPC (App1) for the Department of Education Victoria's
- * Melbourne region deployment using the VPC module.
- */
-
+# main.tf
 locals {
   ipam_pools = { for k, v in var.vpc_configs :
     k => v.use_ipam ? aws_vpc_ipam_pool_cidr_allocation[k][0].cidr : v.cidr
@@ -36,7 +31,7 @@ resource "aws_iam_role" "flow_log_role" {
 
   name = "vpc-flow-logs-role-${each.key}"
 
-  provider = aws.${each.value.provider_alias}
+  provider = aws[each.value.provider_alias]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -58,7 +53,7 @@ resource "aws_iam_role_policy" "flow_log_policy" {
   name = "vpc-flow-logs-policy-${each.key}"
   role = aws_iam_role.flow_log_role[each.key].id
 
-  provider = aws.${each.value.provider_alias}
+  provider = aws[each.value.provider_alias]
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -84,17 +79,17 @@ resource "aws_cloudwatch_log_group" "flow_log_group" {
   name              = "/aws/vpc/flowlogs-${each.key}"
   retention_in_days = 30
 
-  provider = aws.${each.value.provider_alias}
+  provider = aws[each.value.provider_alias]
   tags     = var.tags
 }
 
 resource "aws_vpc_ipam_pool_cidr_allocation" "this" {
   for_each = { for k, v in var.vpc_configs : k => v if v.use_ipam }
 
-  provider        = aws.transit_account
-  ipam_pool_id    = data.aws_vpc_ipam_pool.workload[0].id
-  netmask_length  = 24
-  description     = "CIDR allocation for ${each.value.name}"
+  provider       = aws.transit_account
+  ipam_pool_id   = data.aws_vpc_ipam_pool.workload[0].id
+  netmask_length = 24
+  description    = "CIDR allocation for ${each.value.name}"
 }
 
 module "vpcs" {
@@ -106,7 +101,7 @@ module "vpcs" {
   vpc_cidr = local.ipam_pools[each.key]
 
   providers = {
-    aws                 = aws.${each.value.provider_alias}
+    aws                 = aws[each.value.provider_alias]
     aws.transit_account = aws.transit_account
   }
 
@@ -134,7 +129,7 @@ module "tgw_attachment_subnets" {
   source = "./modules/subnet"
 
   providers = {
-    aws = aws.${each.value.provider_alias}
+    aws = aws[each.value.provider_alias]
   }
 
   vpc_id             = module.vpcs[each.key].vpc_id
@@ -159,7 +154,7 @@ module "app_subnets" {
   source = "./modules/subnet"
 
   providers = {
-    aws = aws.${each.value.provider_alias}
+    aws = aws[each.value.provider_alias]
   }
 
   vpc_id             = module.vpcs[each.key].vpc_id
@@ -184,7 +179,7 @@ module "data_subnets" {
   source = "./modules/subnet"
 
   providers = {
-    aws = aws.${each.value.provider_alias}
+    aws = aws[each.value.provider_alias]
   }
 
   vpc_id             = module.vpcs[each.key].vpc_id
@@ -209,7 +204,7 @@ module "security_groups" {
   source = "./modules/security-groups"
 
   providers = {
-    aws = aws.${each.value.provider_alias}
+    aws = aws[each.value.provider_alias]
   }
 
   vpc_id           = module.vpcs[each.key].vpc_id
