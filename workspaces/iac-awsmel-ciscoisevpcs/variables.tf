@@ -40,18 +40,6 @@ variable "enable_vpc_flow_logs" {
   default     = true
 }
 
-variable "flow_log_role_arn" {
-  description = "ARN of IAM role for VPC Flow Logs (if created externally)"
-  type        = string
-  default     = ""
-}
-
-variable "flow_log_destination_arn" {
-  description = "ARN of the destination for VPC Flow Logs (if created externally)"
-  type        = string
-  default     = ""
-}
-
 variable "use_ipam" {
   description = "Whether to use IPAM for CIDR allocation"
   type        = bool
