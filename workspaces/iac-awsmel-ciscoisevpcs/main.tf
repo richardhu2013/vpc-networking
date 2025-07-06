@@ -150,7 +150,6 @@ module "cisco_vpcs" {
   transit_gateway_id = var.transit_gateway_id
   # Use appropriate route table based on VPC type
   transit_gateway_route_table_id = each.key == "guest" ? data.aws_ec2_transit_gateway_route_table.cisco_guest.id : data.aws_ec2_transit_gateway_route_table.cisco_non_guest.id
-  # transit_gateway_security_route_table_id = data.aws_ec2_transit_gateway_route_table.security_vpc.id
   
   # Cisco VPC specific configurations
   vpc_type = each.key  # "guest" or "non-guest"

@@ -33,11 +33,6 @@ variable "transit_gateway_route_table_id" {
   type        = string
 }
 
-variable "transit_gateway_security_route_table_id" {
-  description = "ID of the Security VPC Transit Gateway route table"
-  type        = string
-}
-
 variable "public_subnets_enabled" {
   description = "Whether to create public subnets"
   type        = bool
