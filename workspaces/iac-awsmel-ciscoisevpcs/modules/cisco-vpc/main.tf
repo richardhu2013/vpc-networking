@@ -223,12 +223,12 @@ resource "aws_ec2_transit_gateway_route_table_association" "this" {
   transit_gateway_route_table_id = var.transit_gateway_route_table_id
 }
 
-# Propagate routes to Security VPC route table
-resource "aws_ec2_transit_gateway_route_table_propagation" "security_vpc" {
-  provider = aws.transit_account
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
-  transit_gateway_route_table_id = var.transit_gateway_security_route_table_id
-}
+# # Propagate routes to Security VPC route table
+# resource "aws_ec2_transit_gateway_route_table_propagation" "security_vpc" {
+#   provider = aws.transit_account
+#   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
+#   transit_gateway_route_table_id = var.transit_gateway_security_route_table_id
+# }
 
 # Create security groups
 resource "aws_security_group" "psn" {

@@ -38,7 +38,7 @@ variable "dx_amazon_side_asn" {
 variable "dx_allowed_prefixes" {
   description = "List of CIDR blocks allowed to be advertised through the Direct Connect Gateway"
   type        = list(string)
-  default     = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+  default     = ["10.100.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 }
 
 variable "security_vpc_attachment_id" {
@@ -88,13 +88,13 @@ variable "ipam_additional_regions" {
 variable "ipam_top_level_cidr" {
   description = "CIDR for the top-level IPAM pool"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "10.100.0.0/16"
 }
 
 variable "ipam_regional_cidr" {
   description = "CIDR for the regional IPAM pool"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "10.100.0.0/16"
 }
 
 variable "ipam_functional_pools" {
@@ -105,23 +105,23 @@ variable "ipam_functional_pools" {
   }))
   default = {
     security = {
-      cidr        = "10.0.0.0/23"
+      cidr        = "10.100.0.0/23"
       description = "Pool for Security VPC"
     },
     external-lb = {
-      cidr        = "10.0.2.0/23"
+      cidr        = "10.100.2.0/23"
       description = "Pool for External LB VPC"
     },
     internal-lb = {
-      cidr        = "10.0.6.0/23"
+      cidr        = "10.100.6.0/23"
       description = "Pool for Internal LB VPC"
     },
     workload = {
-      cidr        = "10.0.16.0/20"
+      cidr        = "10.100.16.0/20"
       description = "Pool for Workload VPCs"
     },
     cisco = {
-      cidr        = "10.0.32.0/20"
+      cidr        = "10.100.32.0/20"
       description = "Pool for Cisco VPCs"
     }
   }
