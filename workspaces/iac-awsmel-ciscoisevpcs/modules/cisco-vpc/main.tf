@@ -609,22 +609,6 @@ resource "aws_flow_log" "this" {
   )
 }
 
-# Placeholder for the lambda code zip file
-resource "local_file" "lambda_zip" {
-  count = var.lambda_enabled ? 1 : 0
-  
-  content  = <<-EOF
-    exports.handler = async (event) => {
-      console.log('Cisco ISE handler invoked');
-      return {
-        statusCode: 200,
-        body: JSON.stringify('Hello from Lambda!'),
-      };
-    };
-  EOF
-  filename = "${path.module}/lambda/index.js"
-}
-
 resource "null_resource" "zip_lambda" {
   count = var.lambda_enabled ? 1 : 0
   
