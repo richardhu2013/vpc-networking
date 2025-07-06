@@ -134,164 +134,307 @@ data "aws_vpc_ipam_pool" "workload" {
   }
 }
 
-# Create IPAM allocations for App1 VPC
-resource "aws_vpc_ipam_pool_cidr_allocation" "app1" {
-  count    = var.use_ipam ? 1 : 0
-  provider = aws.transit_account
+# # Create IPAM allocations for App1 VPC
+# resource "aws_vpc_ipam_pool_cidr_allocation" "app1" {
+#   count    = var.use_ipam ? 1 : 0
+#   provider = aws.transit_account
 
-  ipam_pool_id   = data.aws_vpc_ipam_pool.workload[0].id
-  netmask_length = 24
-  description    = "CIDR allocation for ${var.app1_name} VPC"
-}
+#   ipam_pool_id   = data.aws_vpc_ipam_pool.workload[0].id
+#   netmask_length = 24
+#   description    = "CIDR allocation for ${var.app1_name} VPC"
+# }
 
-# Define the App1 VPC CIDR block and subnet CIDRs
+# # Define the App1 VPC CIDR block and subnet CIDRs
+# locals {
+#   app1_vpc_cidr = var.use_ipam ? aws_vpc_ipam_pool_cidr_allocation.app1[0].cidr : var.app1_vpc_cidr
+
+#   # Define subnet CIDR blocks
+#   app1_tgw_subnet_cidrs = [
+#     cidrsubnet(local.app1_vpc_cidr, 4, 0), //10.100.16.0/28
+#     cidrsubnet(local.app1_vpc_cidr, 4, 1)  //10.100.16.16/28
+#   ]
+#   app1_app_subnet_cidrs = [
+#     cidrsubnet(local.app1_vpc_cidr, 2, 1), //10.100.16.64/26
+#     cidrsubnet(local.app1_vpc_cidr, 2, 2)  //10.100.16.128/26
+#   ]
+#   app1_data_subnet_cidrs = [
+#     cidrsubnet(local.app1_vpc_cidr, 3, 6), // 10.100.16.192/27
+#     cidrsubnet(local.app1_vpc_cidr, 3, 7)  // 10.100.16.224/27
+#   ]
+# }
+
+# # 1. Create TGW attachment subnets first
+# module "app1_tgw_attachment_subnets" {
+#   source = "./modules/subnet"
+
+#   vpc_id             = module.app1_vpc.vpc_id
+#   vpc_name           = "app1"
+#   subnet_type        = "tgw-attachment"
+#   availability_zones = var.availability_zones
+#   subnet_cidrs       = local.app1_tgw_subnet_cidrs
+
+#   route_table_routes = [
+#     {
+#       cidr_block = "0.0.0.0/0"
+#       gateway_id = var.transit_gateway_id
+#     }
+#   ]
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Application = "App1"
+#     }
+#   )
+# }
+
+# # 2. Create App subnets
+# module "app1_app_subnets" {
+#   source = "./modules/subnet"
+
+#   vpc_id             = module.app1_vpc.vpc_id
+#   vpc_name           = "app1"
+#   subnet_type        = "application"
+#   availability_zones = var.availability_zones
+#   subnet_cidrs       = local.app1_app_subnet_cidrs
+
+#   route_table_routes = [
+#     {
+#       cidr_block = "0.0.0.0/0"
+#       gateway_id = var.transit_gateway_id
+#     }
+#   ]
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Application = "App1"
+#     }
+#   )
+# }
+
+# # 3. Create Data subnets
+# module "app1_data_subnets" {
+#   source = "./modules/subnet"
+
+#   vpc_id             = module.app1_vpc.vpc_id
+#   vpc_name           = "app1"
+#   subnet_type        = "data"
+#   availability_zones = var.availability_zones
+#   subnet_cidrs       = local.app1_data_subnet_cidrs
+
+#   route_table_routes = [
+#     {
+#       cidr_block = "0.0.0.0/0"
+#       gateway_id = var.transit_gateway_id
+#     }
+#   ]
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Application = "App1"
+#     }
+#   )
+# }
+
+# # 4. Create VPC using the VPC module
+# module "app1_vpc" {
+#   source = "./modules/vpc"
+
+#   vpc_name = "app1-vpc"
+#   vpc_cidr = local.app1_vpc_cidr
+
+#   providers = {
+#     aws.transit_account = aws.transit_account
+#   }
+#   # azs      = var.availability_zones
+
+#   # Pass the subnet IDs created above
+#   # tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
+#   tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
+#   app_subnet_ids            = module.app1_app_subnets.subnet_ids
+
+#   # Transit Gateway configuration
+#   transit_gateway_id                         = var.transit_gateway_id
+#   transit_gateway_spoke_route_table_id       = data.aws_ec2_transit_gateway_route_table.spoke_vpc.id
+#   transit_gateway_security_route_table_id    = data.aws_ec2_transit_gateway_route_table.security_vpc.id
+#   transit_gateway_external_lb_route_table_id = data.aws_ec2_transit_gateway_route_table.external_lb_vpc.id
+#   transit_gateway_internal_lb_route_table_id = data.aws_ec2_transit_gateway_route_table.internal_lb_vpc.id
+
+#   # Optional features
+#   create_ssm_endpoints = var.enable_ssm_endpoints
+#   enable_vpc_flow_logs = var.enable_vpc_flow_logs
+#   # flow_log_role_arn = var.flow_log_role_arn
+#   # flow_log_destination_arn = var.flow_log_destination_arn
+#   flow_log_role_arn        = aws_iam_role.flow_log_role.arn
+#   flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group.arn
+#   aws_region               = var.aws_region
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Application = "App1"
+#     }
+#   )
+# }
+
+# # 5. Create security groups
+# module "app1_security_groups" {
+#   source = "./modules/security-groups"
+
+#   vpc_id           = module.app1_vpc.vpc_id
+#   vpc_name         = "app1"
+#   f5_lb_cidrs      = var.f5_lb_cidrs
+#   management_cidrs = var.management_cidrs
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Application = "App1"
+#     }
+#   )
+# }
+
 locals {
-  app1_vpc_cidr = var.use_ipam ? aws_vpc_ipam_pool_cidr_allocation.app1[0].cidr : var.app1_vpc_cidr
+  ipam_pools = { for k, v in var.vpc_configs :
+    k => v.use_ipam ? aws_vpc_ipam_pool_cidr_allocation[k][0].cidr : v.cidr
+  }
 
-  # Define subnet CIDR blocks
-  app1_tgw_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 4, 0), //10.100.16.0/28
-    cidrsubnet(local.app1_vpc_cidr, 4, 1)  //10.100.16.16/28
-  ]
-  app1_app_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 2, 1), //10.100.16.64/26
-    cidrsubnet(local.app1_vpc_cidr, 2, 2)  //10.100.16.128/26
-  ]
-  app1_data_subnet_cidrs = [
-    cidrsubnet(local.app1_vpc_cidr, 3, 6), // 10.100.16.192/27
-    cidrsubnet(local.app1_vpc_cidr, 3, 7)  // 10.100.16.224/27
-  ]
+  tgw_subnet_cidrs = { for k, cidr in local.ipam_pools :
+    k => [
+      cidrsubnet(cidr, 4, 0),
+      cidrsubnet(cidr, 4, 1)
+    ]
+  }
+
+  app_subnet_cidrs = { for k, cidr in local.ipam_pools :
+    k => [
+      cidrsubnet(cidr, 2, 1),
+      cidrsubnet(cidr, 2, 2)
+    ]
+  }
+
+  data_subnet_cidrs = { for k, cidr in local.ipam_pools :
+    k => [
+      cidrsubnet(cidr, 3, 6),
+      cidrsubnet(cidr, 3, 7)
+    ]
+  }
 }
 
-# 1. Create TGW attachment subnets first
-module "app1_tgw_attachment_subnets" {
-  source = "./modules/subnet"
+resource "aws_vpc_ipam_pool_cidr_allocation" "this" {
+  for_each = { for k, v in var.vpc_configs : k => v if v.use_ipam }
 
-  vpc_id             = module.app1_vpc.vpc_id
-  vpc_name           = "app1"
-  subnet_type        = "tgw-attachment"
-  availability_zones = var.availability_zones
-  subnet_cidrs       = local.app1_tgw_subnet_cidrs
-
-  route_table_routes = [
-    {
-      cidr_block = "0.0.0.0/0"
-      gateway_id = var.transit_gateway_id
-    }
-  ]
-
-  tags = merge(
-    var.tags,
-    {
-      Application = "App1"
-    }
-  )
+  provider        = aws.transit_account
+  ipam_pool_id    = data.aws_vpc_ipam_pool.workload[0].id
+  netmask_length  = 24
+  description     = "CIDR allocation for ${each.value.name}"
 }
 
-# 2. Create App subnets
-module "app1_app_subnets" {
-  source = "./modules/subnet"
+module "vpcs" {
+  for_each = var.vpc_configs
 
-  vpc_id             = module.app1_vpc.vpc_id
-  vpc_name           = "app1"
-  subnet_type        = "application"
-  availability_zones = var.availability_zones
-  subnet_cidrs       = local.app1_app_subnet_cidrs
-
-  route_table_routes = [
-    {
-      cidr_block = "0.0.0.0/0"
-      gateway_id = var.transit_gateway_id
-    }
-  ]
-
-  tags = merge(
-    var.tags,
-    {
-      Application = "App1"
-    }
-  )
-}
-
-# 3. Create Data subnets
-module "app1_data_subnets" {
-  source = "./modules/subnet"
-
-  vpc_id             = module.app1_vpc.vpc_id
-  vpc_name           = "app1"
-  subnet_type        = "data"
-  availability_zones = var.availability_zones
-  subnet_cidrs       = local.app1_data_subnet_cidrs
-
-  route_table_routes = [
-    {
-      cidr_block = "0.0.0.0/0"
-      gateway_id = var.transit_gateway_id
-    }
-  ]
-
-  tags = merge(
-    var.tags,
-    {
-      Application = "App1"
-    }
-  )
-}
-
-# 4. Create VPC using the VPC module
-module "app1_vpc" {
   source = "./modules/vpc"
 
-  vpc_name = "app1-vpc"
-  vpc_cidr = local.app1_vpc_cidr
+  vpc_name = each.value.name
+  vpc_cidr = local.ipam_pools[each.key]
 
   providers = {
-    aws.transit_account = aws.transit_account
+    aws                  = aws[each.value.provider_alias]
+    aws.transit_account  = aws.transit_account
   }
-  # azs      = var.availability_zones
 
-  # Pass the subnet IDs created above
-  # tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
-  tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
-  app_subnet_ids            = module.app1_app_subnets.subnet_ids
+  tgw_attachment_subnet_ids = module.tgw_attachment_subnets[each.key].subnet_ids
+  app_subnet_ids            = module.app_subnets[each.key].subnet_ids
 
-  # Transit Gateway configuration
   transit_gateway_id                         = var.transit_gateway_id
   transit_gateway_spoke_route_table_id       = data.aws_ec2_transit_gateway_route_table.spoke_vpc.id
   transit_gateway_security_route_table_id    = data.aws_ec2_transit_gateway_route_table.security_vpc.id
   transit_gateway_external_lb_route_table_id = data.aws_ec2_transit_gateway_route_table.external_lb_vpc.id
   transit_gateway_internal_lb_route_table_id = data.aws_ec2_transit_gateway_route_table.internal_lb_vpc.id
 
-  # Optional features
-  create_ssm_endpoints = var.enable_ssm_endpoints
-  enable_vpc_flow_logs = var.enable_vpc_flow_logs
-  # flow_log_role_arn = var.flow_log_role_arn
-  # flow_log_destination_arn = var.flow_log_destination_arn
+  create_ssm_endpoints     = var.enable_ssm_endpoints
+  enable_vpc_flow_logs     = var.enable_vpc_flow_logs
   flow_log_role_arn        = aws_iam_role.flow_log_role.arn
   flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group.arn
   aws_region               = var.aws_region
 
-  tags = merge(
-    var.tags,
-    {
-      Application = "App1"
-    }
-  )
+  tags = merge(var.tags, { Application = each.value.name })
 }
 
-# 5. Create security groups
-module "app1_security_groups" {
+module "tgw_attachment_subnets" {
+  for_each = var.vpc_configs
+
+  source = "./modules/subnet"
+
+  vpc_id             = module.vpcs[each.key].vpc_id
+  vpc_name           = each.value.name
+  subnet_type        = "tgw-attachment"
+  availability_zones = var.availability_zones
+  subnet_cidrs       = local.tgw_subnet_cidrs[each.key]
+
+  route_table_routes = [
+    {
+      cidr_block = "0.0.0.0/0"
+      gateway_id = var.transit_gateway_id
+    }
+  ]
+
+  tags = merge(var.tags, { Application = each.value.name })
+}
+
+module "app_subnets" {
+  for_each = var.vpc_configs
+
+  source = "./modules/subnet"
+
+  vpc_id             = module.vpcs[each.key].vpc_id
+  vpc_name           = each.value.name
+  subnet_type        = "application"
+  availability_zones = var.availability_zones
+  subnet_cidrs       = local.app_subnet_cidrs[each.key]
+
+  route_table_routes = [
+    {
+      cidr_block = "0.0.0.0/0"
+      gateway_id = var.transit_gateway_id
+    }
+  ]
+
+  tags = merge(var.tags, { Application = each.value.name })
+}
+
+module "data_subnets" {
+  for_each = var.vpc_configs
+
+  source = "./modules/subnet"
+
+  vpc_id             = module.vpcs[each.key].vpc_id
+  vpc_name           = each.value.name
+  subnet_type        = "data"
+  availability_zones = var.availability_zones
+  subnet_cidrs       = local.data_subnet_cidrs[each.key]
+
+  route_table_routes = [
+    {
+      cidr_block = "0.0.0.0/0"
+      gateway_id = var.transit_gateway_id
+    }
+  ]
+
+  tags = merge(var.tags, { Application = each.value.name })
+}
+
+module "security_groups" {
+  for_each = var.vpc_configs
+
   source = "./modules/security-groups"
 
-  vpc_id           = module.app1_vpc.vpc_id
-  vpc_name         = "app1"
+  vpc_id           = module.vpcs[each.key].vpc_id
+  vpc_name         = each.value.name
   f5_lb_cidrs      = var.f5_lb_cidrs
   management_cidrs = var.management_cidrs
 
-  tags = merge(
-    var.tags,
-    {
-      Application = "App1"
-    }
-  )
+  tags = merge(var.tags, { Application = each.value.name })
 }
