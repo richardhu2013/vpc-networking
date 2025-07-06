@@ -31,13 +31,13 @@ vpc_configs = {
     name           = "doevic-mel-workload-1"
     use_ipam       = true
     cidr           = "10.100.16.0/24" # only used if use_ipam = false
-    provider_alias = "app1_account"
+    provider_alias = "app1"
   }
 
   app2 = {
-    name           = "doevic-mel-workload-1"
+    name           = "doevic-mel-workload-2"
     use_ipam       = false
     cidr           = "10.100.32.0/24"
-    provider_alias = "app2_account"
+    provider_alias = "app2"
   }
 }

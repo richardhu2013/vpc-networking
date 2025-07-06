@@ -1,5 +1,5 @@
 provider "aws" {
-  alias  = "app1_account"
+  alias  = "app1"
   region = var.aws_region
   assume_role {
     role_arn = "arn:aws:iam:248896117066:role/DEVTerraformDeploymentRole"
@@ -16,7 +16,7 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias  = "app2_account"
+  alias  = "app2"
   region = var.aws_region
   assume_role {
     role_arn = "arn:aws:iam::248896117066:role/DEVTerraformDeploymentRole"

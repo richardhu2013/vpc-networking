@@ -1,6 +1,12 @@
 # main.tf
 locals {
-  ipam_pools = { for k, v in var.vpc_configs :
+  provider_map = {
+    for k, v in var.vpc_configs :
+    k => aws["${k}"]
+  }
+
+  ipam_pools = {
+    for k, v in var.vpc_configs :
     k => v.use_ipam ? aws_vpc_ipam_pool_cidr_allocation[k][0].cidr : v.cidr
   }
 
@@ -26,70 +32,26 @@ locals {
   }
 }
 
-resource "aws_iam_role" "flow_log_role" {
+module "flow_logs" {
   for_each = var.vpc_configs
 
-  name = "vpc-flow-logs-role-${each.key}"
+  source = "./modules/flow-logs"
 
-  provider = aws[each.value.provider_alias]
+  providers = {
+    aws = local.provider_map[each.key]
+  }
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = "sts:AssumeRole",
-        Effect = "Allow",
-        Principal = {
-          Service = "vpc-flow-logs.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "flow_log_policy" {
-  for_each = var.vpc_configs
-
-  name = "vpc-flow-logs-policy-${each.key}"
-  role = aws_iam_role.flow_log_role[each.key].id
-
-  provider = aws[each.value.provider_alias]
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams"
-        ],
-        Effect   = "Allow",
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_cloudwatch_log_group" "flow_log_group" {
-  for_each = var.vpc_configs
-
-  name              = "/aws/vpc/flowlogs-${each.key}"
-  retention_in_days = 30
-
-  provider = aws[each.value.provider_alias]
-  tags     = var.tags
+  name = each.key
+  tags = var.tags
 }
 
 resource "aws_vpc_ipam_pool_cidr_allocation" "this" {
   for_each = { for k, v in var.vpc_configs : k => v if v.use_ipam }
 
-  provider       = aws.transit_account
-  ipam_pool_id   = data.aws_vpc_ipam_pool.workload[0].id
-  netmask_length = 24
-  description    = "CIDR allocation for ${each.value.name}"
+  provider        = aws.transit_account
+  ipam_pool_id    = data.aws_vpc_ipam_pool.workload[0].id
+  netmask_length  = 24
+  description     = "CIDR allocation for ${each.value.name}"
 }
 
 module "vpcs" {
@@ -101,7 +63,7 @@ module "vpcs" {
   vpc_cidr = local.ipam_pools[each.key]
 
   providers = {
-    aws                 = aws[each.value.provider_alias]
+    aws                 = local.provider_map[each.key]
     aws.transit_account = aws.transit_account
   }
 
@@ -116,8 +78,8 @@ module "vpcs" {
 
   create_ssm_endpoints     = var.enable_ssm_endpoints
   enable_vpc_flow_logs     = var.enable_vpc_flow_logs
-  flow_log_role_arn        = aws_iam_role.flow_log_role[each.key].arn
-  flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group[each.key].arn
+  flow_log_role_arn        = module.flow_logs[each.key].iam_role_arn
+  flow_log_destination_arn = module.flow_logs[each.key].log_group_arn
   aws_region               = var.aws_region
 
   tags = merge(var.tags, { Application = each.value.name })
@@ -129,7 +91,7 @@ module "tgw_attachment_subnets" {
   source = "./modules/subnet"
 
   providers = {
-    aws = aws[each.value.provider_alias]
+    aws = local.provider_map[each.key]
   }
 
   vpc_id             = module.vpcs[each.key].vpc_id
@@ -154,7 +116,7 @@ module "app_subnets" {
   source = "./modules/subnet"
 
   providers = {
-    aws = aws[each.value.provider_alias]
+    aws = local.provider_map[each.key]
   }
 
   vpc_id             = module.vpcs[each.key].vpc_id
@@ -179,7 +141,7 @@ module "data_subnets" {
   source = "./modules/subnet"
 
   providers = {
-    aws = aws[each.value.provider_alias]
+    aws = local.provider_map[each.key]
   }
 
   vpc_id             = module.vpcs[each.key].vpc_id
@@ -204,7 +166,7 @@ module "security_groups" {
   source = "./modules/security-groups"
 
   providers = {
-    aws = aws[each.value.provider_alias]
+    aws = local.provider_map[each.key]
   }
 
   vpc_id           = module.vpcs[each.key].vpc_id
