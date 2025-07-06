@@ -625,14 +625,10 @@ resource "local_file" "lambda_zip" {
   filename = "${path.module}/lambda/index.js"
 }
 
-resource "null_resource" "zip_lambda" {
+data "archive_file" "lambda_package" {
   count = var.lambda_enabled ? 1 : 0
-  
-  triggers = {
-    lambda_content = local_file.lambda_zip[0].content
-  }
-  
-  provisioner "local-exec" {
-    command = "cd ${path.module}/lambda && zip -r function.zip index.js"
-  }
+
+  type        = "zip"
+  source_file = local_file.lambda_zip[0].filename
+  output_path = "${path.module}/lambda/function.zip"
 }

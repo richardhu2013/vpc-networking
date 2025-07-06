@@ -173,6 +173,8 @@ Resources:
                   - ec2:DescribeAddressesAttribute
                   - elasticloadbalancing:DescribeTargetGroups,
                   - ec2:ModifySubnetAttribute
+                  - elasticloadbalancing:CreateTargetGroup
+                  - elasticloadbalancing:DescribeLoadBalancers
                 Resource: '*'
 
               - Sid: SecurityGroupsAndNetworking
