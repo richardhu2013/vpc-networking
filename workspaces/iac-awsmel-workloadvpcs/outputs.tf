@@ -38,19 +38,9 @@ output "app1_tgw_attachment_subnet_cidrs" {
   value       = module.app1_tgw_attachment_subnets.subnet_cidrs
 }
 
-output "app1_app_subnet_ids" {
-  description = "List of IDs of application subnets"
-  value       = module.app1_app_subnets.subnet_ids
-}
-
 output "app1_app_subnet_cidrs" {
   description = "List of CIDR blocks of application subnets"
   value       = module.app1_app_subnets.subnet_cidrs
-}
-
-output "app1_data_subnet_ids" {
-  description = "List of IDs of data subnets"
-  value       = module.app1_data_subnets.subnet_ids
 }
 
 output "app1_data_subnet_cidrs" {
