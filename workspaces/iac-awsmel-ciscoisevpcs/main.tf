@@ -154,7 +154,7 @@ module "cisco_vpcs" {
   # Cisco VPC specific configurations
   vpc_type = each.key  # "guest" or "non-guest"
   public_subnets_enabled = each.key == "guest" ? true : false
-  create_internet_gateway = each.key == "guest" ? true : false
+  create_internet_gateway = each.key == "guest" ? true : true
   create_nat_gateways = lookup(each.value, "create_nat_gateways", each.key == "guest" ? true : false)
   create_network_load_balancer = lookup(each.value, "create_network_load_balancer", true)
   nlb_internal = each.key == "guest" ? false : true
