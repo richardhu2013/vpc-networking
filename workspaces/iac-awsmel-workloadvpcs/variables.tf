@@ -1,14 +1,14 @@
-# variable "app1_vpc_cidr" {
-#   description = "CIDR block for App1 VPC"
-#   type        = string
-#   default     = "10.100.4.0/24"
-# }
+variable "app1_vpc_cidr" {
+  description = "CIDR block for App1 VPC"
+  type        = string
+  default     = "10.100.4.0/24"
+}
 
-# variable "app2_vpc_cidr" {
-#   description = "CIDR block for App2 VPC"
-#   type        = string
-#   default     = "10.100.5.0/24"
-# }
+variable "app2_vpc_cidr" {
+  description = "CIDR block for App2 VPC"
+  type        = string
+  default     = "10.100.5.0/24"
+}
 
 variable "availability_zones" {
   description = "List of availability zones to use"
@@ -85,10 +85,15 @@ variable "ipam_workload_pool_id" {
   default     = ""
 }
 
-# variable "app1_name" {
-#   description = "Name of the App 1 VPC"
-#   type        = string
-# }
+variable "app1_name" {
+  description = "Name of the App 1 VPC"
+  type        = string
+}
+
+variable "app2_name" {
+  description = "Name of the App 1 VPC"
+  type        = string
+}
 
 variable "ipam_name" {
   description = "Name of the IPAM"

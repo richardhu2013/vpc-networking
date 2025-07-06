@@ -269,11 +269,23 @@ Resources:
                   - lambda:AddPermission
                   - lambda:RemovePermission
                 Resource: "*"
-
+              - Sid: LambdaVPCAccess
+                Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeAccountAttributes
+                Resource: "*"
               - Sid: LambdaPassRole
                 Effect: Allow
                 Action:
                   - iam:PassRole
+                  - iam:CreateServiceLinkedRole
                 Resource: "*"
                 Condition:
                   StringLikeIfExists:
@@ -308,6 +320,10 @@ Resources:
                   - elasticloadbalancing:DescribeTargetGroups
                   - elasticloadbalancing:DescribeListeners
                   - elasticloadbalancing:DescribeTags
+                  - elasticloadbalancing:DescribeTargetGroupAttributes
+                  - elasticloadbalancing:ModifyTargetGroupAttributes
+                  - elasticloadbalancing:ModifyLoadBalancerAttributes
+                  - elasticloadbalancing:DescribeListenerAttributes
                 Resource: "*"
 
 Outputs:
