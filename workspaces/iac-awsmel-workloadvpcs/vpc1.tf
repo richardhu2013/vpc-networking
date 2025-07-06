@@ -1,31 +1,25 @@
-/**
- * # Melbourne Region Workload VPC - App2
- * This workspace creates a standard three-tier workload VPC (App2) for the Department of Education Victoria's
- * Melbourne region deployment using the VPC module.
- */
-
-# Define the App2 VPC CIDR block and subnet CIDRs
+# Define the App1 VPC CIDR block and subnet CIDRs
 locals {
-  app2_vpc_cidr = var.use_ipam ? aws_vpc_ipam_pool_cidr_allocation.app2[0].cidr : var.app2_vpc_cidr
+  app1_vpc_cidr = var.use_ipam ? aws_vpc_ipam_pool_cidr_allocation.app1[0].cidr : var.app1_vpc_cidr
 
   # Define subnet CIDR blocks
-  app2_tgw_subnet_cidrs = [
-    cidrsubnet(local.app2_vpc_cidr, 4, 0), //10.100.16.0/28
-    cidrsubnet(local.app2_vpc_cidr, 4, 1)  //10.100.16.16/28
+  app1_tgw_subnet_cidrs = [
+    cidrsubnet(local.app1_vpc_cidr, 4, 0), //10.100.16.0/28
+    cidrsubnet(local.app1_vpc_cidr, 4, 1)  //10.100.16.16/28
   ]
-  app2_app_subnet_cidrs = [
-    cidrsubnet(local.app2_vpc_cidr, 2, 1), //10.100.16.64/26
-    cidrsubnet(local.app2_vpc_cidr, 2, 2)  //10.100.16.128/26
+  app1_app_subnet_cidrs = [
+    cidrsubnet(local.app1_vpc_cidr, 2, 1), //10.100.16.64/26
+    cidrsubnet(local.app1_vpc_cidr, 2, 2)  //10.100.16.128/26
   ]
-  app2_data_subnet_cidrs = [
-    cidrsubnet(local.app2_vpc_cidr, 3, 6), // 10.100.16.192/27
-    cidrsubnet(local.app2_vpc_cidr, 3, 7)  // 10.100.16.224/27
+  app1_data_subnet_cidrs = [
+    cidrsubnet(local.app1_vpc_cidr, 3, 6), // 10.100.16.192/27
+    cidrsubnet(local.app1_vpc_cidr, 3, 7)  // 10.100.16.224/27
   ]
 }
 
 # Create IAM Role for Flow Logs
-resource "aws_iam_role" "flow_log_role_app2" {
-  provider = aws.app2
+resource "aws_iam_role" "flow_log_role" {
+  provider = aws.app1
   name     = "vpc-flow-logs-role"
 
   assume_role_policy = jsonencode({
@@ -42,10 +36,10 @@ resource "aws_iam_role" "flow_log_role_app2" {
   })
 }
 
-resource "aws_iam_role_policy" "flow_log_policy_app2" {
-  provider = aws.app2
+resource "aws_iam_role_policy" "flow_log_policy" {
+  provider = aws.app1
   name     = "vpc-flow-logs-policy"
-  role     = aws_iam_role.flow_log_role_app2.id
+  role     = aws_iam_role.flow_log_role.id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -66,38 +60,37 @@ resource "aws_iam_role_policy" "flow_log_policy_app2" {
 }
 
 # Create CloudWatch Log Group for Flow Logs
-resource "aws_cloudwatch_log_group" "flow_log_group_app2" {
-  provider = aws.app2
+resource "aws_cloudwatch_log_group" "flow_log_group" {
+  provider = aws.app1
 
-  name              = "/aws/vpc/flowlogs"
+  name              = "/aws/vpc/app1/flowlogs"
   retention_in_days = 30
 
   tags = var.tags
 }
 
-# Create IPAM allocations for App2 VPC
-resource "aws_vpc_ipam_pool_cidr_allocation" "app2" {
+# Create IPAM allocations for App1 VPC
+resource "aws_vpc_ipam_pool_cidr_allocation" "app1" {
   count    = var.use_ipam ? 1 : 0
   provider = aws.transit_account
 
   ipam_pool_id   = data.aws_vpc_ipam_pool.workload[0].id
   netmask_length = 24
-  description    = "CIDR allocation for ${var.app2_name} VPC"
+  description    = "CIDR allocation for ${var.app1_name} VPC"
 }
 
-
 # 1. Create TGW attachment subnets first
-module "app2_tgw_attachment_subnets" {
+module "app1_tgw_attachment_subnets" {
   source = "./modules/subnet"
-  providers = {
-    aws = aws.app2
-  }
 
-  vpc_id             = module.app2_vpc.vpc_id
-  vpc_name           = "app2"
+  providers = {
+    aws = aws.app1
+  }
+  vpc_id             = module.app1_vpc.vpc_id
+  vpc_name           = "app1"
   subnet_type        = "tgw-attachment"
   availability_zones = var.availability_zones
-  subnet_cidrs       = local.app2_tgw_subnet_cidrs
+  subnet_cidrs       = local.app1_tgw_subnet_cidrs
 
   route_table_routes = [
     {
@@ -109,23 +102,23 @@ module "app2_tgw_attachment_subnets" {
   tags = merge(
     var.tags,
     {
-      Application = "App2"
+      Application = "App1"
     }
   )
 }
 
 # 2. Create App subnets
-module "app2_app_subnets" {
+module "app1_app_subnets" {
   source = "./modules/subnet"
   providers = {
-    aws = aws.app2
+    aws = aws.app1
   }
 
-  vpc_id             = module.app2_vpc.vpc_id
-  vpc_name           = "app2"
+  vpc_id             = module.app1_vpc.vpc_id
+  vpc_name           = "app1"
   subnet_type        = "application"
   availability_zones = var.availability_zones
-  subnet_cidrs       = local.app2_app_subnet_cidrs
+  subnet_cidrs       = local.app1_app_subnet_cidrs
 
   route_table_routes = [
     {
@@ -137,23 +130,22 @@ module "app2_app_subnets" {
   tags = merge(
     var.tags,
     {
-      Application = "App2"
+      Application = "App1"
     }
   )
 }
 
 # 3. Create Data subnets
-module "app2_data_subnets" {
+module "app1_data_subnets" {
   source = "./modules/subnet"
   providers = {
-    aws = aws.app2
+    aws = aws.app1
   }
-
-  vpc_id             = module.app2_vpc.vpc_id
-  vpc_name           = "app2"
+  vpc_id             = module.app1_vpc.vpc_id
+  vpc_name           = "app1"
   subnet_type        = "data"
   availability_zones = var.availability_zones
-  subnet_cidrs       = local.app2_data_subnet_cidrs
+  subnet_cidrs       = local.app1_data_subnet_cidrs
 
   route_table_routes = [
     {
@@ -165,28 +157,28 @@ module "app2_data_subnets" {
   tags = merge(
     var.tags,
     {
-      Application = "App2"
+      Application = "App1"
     }
   )
 }
 
 # 4. Create VPC using the VPC module
-module "app2_vpc" {
+module "app1_vpc" {
   source = "./modules/vpc"
 
-  vpc_name = "app2-vpc"
-  vpc_cidr = local.app2_vpc_cidr
+  vpc_name = "app1-vpc"
+  vpc_cidr = local.app1_vpc_cidr
 
   providers = {
-    aws                 = aws.app2
+    aws                 = aws.app1
     aws.transit_account = aws.transit_account
   }
   # azs      = var.availability_zones
 
   # Pass the subnet IDs created above
-  # tgw_attachment_subnet_ids = module.app2_tgw_attachment_subnets.subnet_ids
-  tgw_attachment_subnet_ids = module.app2_tgw_attachment_subnets.subnet_ids
-  app_subnet_ids            = module.app2_app_subnets.subnet_ids
+  # tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
+  tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
+  app_subnet_ids            = module.app1_app_subnets.subnet_ids
 
   # Transit Gateway configuration
   transit_gateway_id                         = var.transit_gateway_id
@@ -200,34 +192,34 @@ module "app2_vpc" {
   enable_vpc_flow_logs = var.enable_vpc_flow_logs
   # flow_log_role_arn = var.flow_log_role_arn
   # flow_log_destination_arn = var.flow_log_destination_arn
-  flow_log_role_arn        = aws_iam_role.flow_log_role_app2.arn
-  flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group_app2.arn
+  flow_log_role_arn        = aws_iam_role.flow_log_role.arn
+  flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group.arn
   aws_region               = var.aws_region
 
   tags = merge(
     var.tags,
     {
-      Application = "App2"
+      Application = "App1"
     }
   )
 }
 
 # 5. Create security groups
-module "app2_security_groups" {
+module "app1_security_groups" {
   source = "./modules/security-groups"
   providers = {
-    aws = aws.app2
+    aws = aws.app1
   }
 
-  vpc_id           = module.app2_vpc.vpc_id
-  vpc_name         = "app2"
+  vpc_id           = module.app1_vpc.vpc_id
+  vpc_name         = "app1"
   f5_lb_cidrs      = var.f5_lb_cidrs
   management_cidrs = var.management_cidrs
 
   tags = merge(
     var.tags,
     {
-      Application = "App2"
+      Application = "App1"
     }
   )
 }
