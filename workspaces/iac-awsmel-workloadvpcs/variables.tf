@@ -100,3 +100,13 @@ variable "ipam_name" {
   type        = string
   default     = "de-vic-ipam"
 }
+
+variable "vpc_configs" {
+  description = "Map of VPC configurations"
+  type = map(object({
+    name           = string
+    use_ipam       = bool
+    cidr           = string
+    provider_alias = string
+  }))
+}

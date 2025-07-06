@@ -24,3 +24,19 @@ tags = {
   Owner       = "Network Team"
   CostCenter  = "12345"
 }
+
+vpc_configs = {
+  app1 = {
+    name           = "doevic-mel-workload-1"
+    use_ipam       = true
+    cidr           = "10.100.16.0/24" # only used if use_ipam = false
+    provider_alias = "app1_account"
+  }
+
+  app2 = {
+    name           = "doevic-mel-workload-1"
+    use_ipam       = false
+    cidr           = "10.100.32.0/24"
+    provider_alias = "app2_account"
+  }
+}

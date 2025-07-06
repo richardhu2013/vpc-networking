@@ -1,8 +1,30 @@
-/**
- * # Melbourne Region Workload VPC - App1
- * This workspace creates a standard three-tier workload VPC (App1) for the Department of Education Victoria's
- * Melbourne region deployment using the VPC module.
- */
+# main.tf
+locals {
+  ipam_pools = { for k, v in var.vpc_configs :
+    k => v.use_ipam ? aws_vpc_ipam_pool_cidr_allocation[k][0].cidr : v.cidr
+  }
+
+  tgw_subnet_cidrs = { for k, cidr in local.ipam_pools :
+    k => [
+      cidrsubnet(cidr, 4, 0),
+      cidrsubnet(cidr, 4, 1)
+    ]
+  }
+
+  app_subnet_cidrs = { for k, cidr in local.ipam_pools :
+    k => [
+      cidrsubnet(cidr, 2, 1),
+      cidrsubnet(cidr, 2, 2)
+    ]
+  }
+
+  data_subnet_cidrs = { for k, cidr in local.ipam_pools :
+    k => [
+      cidrsubnet(cidr, 3, 6),
+      cidrsubnet(cidr, 3, 7)
+    ]
+  }
+}
 
 # Get data about existing Transit Gateway
 data "aws_ec2_transit_gateway" "this" {

@@ -2,8 +2,7 @@ provider "aws" {
   alias  = "app1"
   region = "ap-southeast-4"
   assume_role {
-    role_arn     = "arn:aws:iam::248896117066:role/DEVTerraformDeploymentRole"
-    session_name = "TerraformCloudDeployment"
+    role_arn = "arn:aws:iam:248896117066:role/DEVTerraformDeploymentRole"
   }
   # Default tags applied to all resources
   default_tags {
@@ -36,15 +35,29 @@ provider "aws" {
 
 # Provider for the Transit Account (to access Transit Gateway resources)
 provider "aws" {
-  alias  = "transit_account"
-  region = "ap-southeast-4"
+  alias  = "app2_account"
+  region = var.aws_region
+  assume_role {
+    role_arn = "arn:aws:iam::248896117066:role/DEVTerraformDeploymentRole"
+  }
+  # Default tags applied to all resources
+  default_tags {
+    tags = {
+      Environment = "Production"
+      Project     = "DOEVic-Melbourne"
+      ManagedBy   = "Terraform"
+      Region      = "ap-southeast-4"
+    }
+  }
+}
 
-  # Use service account to assume role in Transit Account
+provider "aws" {
+  alias  = "transit_account"
+  region = var.aws_region
   assume_role {
     role_arn = "arn:aws:iam::681696216801:role/DEVTerraformDeploymentRole"
   }
-
-  # Default tags applied to all resources in transit account
+  # Default tags applied to all resources
   default_tags {
     tags = {
       Environment = "Production"
