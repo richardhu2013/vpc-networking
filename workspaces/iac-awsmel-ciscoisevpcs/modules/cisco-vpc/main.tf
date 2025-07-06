@@ -229,7 +229,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "this" {
   transit_gateway_default_route_table_propagation = false
 
   tags = {
-    Name = "${var.vpc_name}-tgw-attachment-accepter"
+    Name = "${var.name}-tgw-attachment-accepter"
     # Add any other tags as needed
   }
 }
