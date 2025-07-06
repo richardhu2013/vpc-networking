@@ -79,7 +79,6 @@ resource "aws_vpc_ipam_pool_cidr_allocation" "app1" {
   description    = "CIDR allocation for ${var.app1_name} VPC"
 }
 
-# 1. Create TGW attachment subnets first
 module "app1_tgw_attachment_subnets" {
   source = "./modules/subnet"
 
@@ -107,7 +106,6 @@ module "app1_tgw_attachment_subnets" {
   )
 }
 
-# 2. Create App subnets
 module "app1_app_subnets" {
   source = "./modules/subnet"
   providers = {
@@ -135,7 +133,6 @@ module "app1_app_subnets" {
   )
 }
 
-# 3. Create Data subnets
 module "app1_data_subnets" {
   source = "./modules/subnet"
   providers = {
@@ -162,7 +159,6 @@ module "app1_data_subnets" {
   )
 }
 
-# 4. Create VPC using the VPC module
 module "app1_vpc" {
   source = "./modules/vpc"
 
@@ -176,7 +172,6 @@ module "app1_vpc" {
   # azs      = var.availability_zones
 
   # Pass the subnet IDs created above
-  # tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
   tgw_attachment_subnet_ids = module.app1_tgw_attachment_subnets.subnet_ids
   app_subnet_ids            = module.app1_app_subnets.subnet_ids
 
@@ -190,8 +185,6 @@ module "app1_vpc" {
   # Optional features
   create_ssm_endpoints = var.enable_ssm_endpoints
   enable_vpc_flow_logs = var.enable_vpc_flow_logs
-  # flow_log_role_arn = var.flow_log_role_arn
-  # flow_log_destination_arn = var.flow_log_destination_arn
   flow_log_role_arn        = aws_iam_role.flow_log_role.arn
   flow_log_destination_arn = aws_cloudwatch_log_group.flow_log_group.arn
   aws_region               = var.aws_region
