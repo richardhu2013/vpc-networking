@@ -545,6 +545,7 @@ resource "aws_iam_role_policy" "lambda" {
           "ec2:DescribeSubnets",
           "ec2:DescribeVpcs",
           "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
           "elasticloadbalancing:DescribeLoadBalancers",
           "elasticloadbalancing:DescribeTargetGroups",
           "elasticloadbalancing:RegisterTargets",
