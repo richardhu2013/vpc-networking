@@ -90,6 +90,11 @@ variable "app1_name" {
   type        = string
 }
 
+variable "app2_name" {
+  description = "Name of the App 1 VPC"
+  type        = string
+}
+
 variable "ipam_name" {
   description = "Name of the IPAM"
   type        = string
